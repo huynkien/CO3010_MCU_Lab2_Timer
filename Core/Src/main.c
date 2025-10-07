@@ -18,6 +18,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "software_timer.h"
+#include "ex_clock.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -89,7 +91,11 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_Base_Start_IT(&htim2);
 
+  setTimer(0, 100); //source led
+  setTimer(1, 100); //dot and 7 segment leds
+//  setTimer(2, 100);  //7 segment led
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -97,7 +103,15 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	  if (isTimerExpired(0)) {
+		  HAL_GPIO_TogglePin(SOURCE_LED_GPIO_Port, SOURCE_LED_Pin);
+		  setTimer(0, 100);
+	  }
+	  if (isTimerExpired(1)) {
+		  HAL_GPIO_TogglePin(DOT_GPIO_Port, DOT_Pin);
+		  Ex_run();
+		  setTimer(1, 10);
+	  }
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -251,7 +265,9 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef *htim) {
+	timerRun();
+}
 /* USER CODE END 4 */
 
 /**
