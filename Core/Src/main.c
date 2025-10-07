@@ -345,7 +345,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 uint8_t counter = 100;
 uint8_t counter_dot = 50;
-uint8_t counter_7seg = 50;
+uint8_t counter_7seg = 25;
 void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef *htim)
 {
 	counter--;
@@ -357,8 +357,10 @@ void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef *htim)
 	}
 	if (counter_dot <= 0) {
 		counter_dot = 50;
-		counter_7seg = 50;
 		HAL_GPIO_TogglePin(DOT_GPIO_Port, DOT_Pin);
+	}
+	if (counter_7seg <= 0) {
+		counter_7seg = 25;
 		Ex_run();
 	}
 
