@@ -56,15 +56,6 @@ static void MX_TIM2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-enum led7seg_state {
-  INIT,
-  LED0,
-  LED1,
-  LED2,
-  LED3
-};
-
-uint8_t led7seg_status = INIT;
 
 const uint8_t SEG7_MAT[10] = {
 	0X3F, // 0: a b c d e f
@@ -122,43 +113,42 @@ void enable7SEG(uint8_t num) {
 	}
 }
 
-void Ex_run() {
-	HAL_GPIO_TogglePin(SOURCE_LED_GPIO_Port, SOURCE_LED_Pin);
-	switch (led7seg_status) {
-		case INIT:
-			HAL_GPIO_WritePin(SEG0_GPIO_Port, SEG0_Pin, SET);
-			HAL_GPIO_WritePin(SEG1_GPIO_Port, SEG1_Pin, SET);
-			HAL_GPIO_WritePin(SEG2_GPIO_Port, SEG2_Pin, SET);
-			HAL_GPIO_WritePin(SEG3_GPIO_Port, SEG3_Pin, SET);
-			HAL_GPIO_WritePin(SEG4_GPIO_Port, SEG4_Pin, SET);
-			HAL_GPIO_WritePin(SEG5_GPIO_Port, SEG5_Pin, SET);
-			HAL_GPIO_WritePin(SEG6_GPIO_Port, SEG6_Pin, SET);
-			led7seg_status = LED0;
-			break;
-		case LED0:
+const int MAX_LED = 4;
+int index_led = 0;
+int led_buffer [4] = {1, 2, 3, 4};
+
+void update7SEG(uint8_t index) {
+	switch (index) {
+		case 0:
 			enable7SEG(0);
-			display7SEG(SEG7_MAT[1]);
-			led7seg_status = LED1;
+			display7SEG(SEG7_MAT[led_buffer[0]]);
 			break;
-		case LED1:
+		case 1:
 			enable7SEG(1);
-			display7SEG(SEG7_MAT[2]);
-			led7seg_status = LED2;
+			display7SEG(SEG7_MAT[led_buffer[1]]);
 			break;
-		case LED2:
+		case 2:
 			enable7SEG(2);
-			display7SEG(SEG7_MAT[3]);
-			led7seg_status = LED3;
+			display7SEG(SEG7_MAT[led_buffer[2]]);
 			break;
-		case LED3:
+		case 3:
 			enable7SEG(3);
-			display7SEG(SEG7_MAT[0]);
-			led7seg_status = LED0;
+			display7SEG(SEG7_MAT[led_buffer[3]]);
 			break;
-		default:
-			break;
+
 	}
 }
+
+void Ex_run() {
+	update7SEG(index_led);
+	led_buffer[index_led] = (led_buffer[index_led] + 1) % 10;
+	if (index_led < 3) {
+		index_led++;
+	} else {
+		index_led = 0;
+	}
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -353,19 +343,25 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-uint8_t counter = 50;
+uint8_t counter = 100;
 uint8_t counter_dot = 50;
+uint8_t counter_7seg = 25;
 void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef *htim)
 {
 	counter--;
 	counter_dot--;
+	counter_7seg--;
 	if (counter <= 0) {
-		counter = 50;
-		Ex_run();
+		counter = 100;
+		HAL_GPIO_TogglePin(SOURCE_LED_GPIO_Port, SOURCE_LED_Pin);
 	}
 	if (counter_dot <= 0) {
 		counter_dot = 50;
 		HAL_GPIO_TogglePin(DOT_GPIO_Port, DOT_Pin);
+	}
+	if (counter_7seg <= 0) {
+		counter_7seg = 25;
+		Ex_run();
 	}
 
 }
