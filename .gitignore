@@ -1,0 +1,10 @@
+.metadata/
+.settings/
+[Rr]elease/
+[Dd]ebug/
+*.ld
+*.mxproject
+*.cproject
+*.nguye.workspace
+*.pdsbak
+*.PDF
