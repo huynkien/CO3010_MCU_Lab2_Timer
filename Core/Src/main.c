@@ -57,6 +57,85 @@ static void MX_TIM2_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+enum led7seg_state {
+	INIT,
+	LED0,
+	LED1
+};
+
+uint8_t led7seg_status = INIT;
+
+const uint8_t SEG7_MAT[10] = {
+	0X3F, // 0: a b c d e f
+	0x06, // 1:   b c
+	0x5B, // 2: a b   d e   g
+	0x4F, // 3: a b c d     g
+	0x66, // 4:   b c   f   g
+	0x6D, // 5: a   c d   f g
+	0x7D, // 6: a   c d e f g
+	0x07, // 7: a b c
+	0x7F, // 8: a b c d e f g
+	0x6F  // 9: a b c d   f g
+};
+
+void display7SEG(uint8_t digit) {
+	HAL_GPIO_WritePin(SEG0_GPIO_Port, SEG0_Pin, (digit & (1u<<0)) ? RESET : SET);
+	HAL_GPIO_WritePin(SEG1_GPIO_Port, SEG1_Pin, (digit & (1u<<1)) ? RESET : SET);
+	HAL_GPIO_WritePin(SEG2_GPIO_Port, SEG2_Pin, (digit & (1u<<2)) ? RESET : SET);
+	HAL_GPIO_WritePin(SEG3_GPIO_Port, SEG3_Pin, (digit & (1u<<3)) ? RESET : SET);
+	HAL_GPIO_WritePin(SEG4_GPIO_Port, SEG4_Pin, (digit & (1u<<4)) ? RESET : SET);
+	HAL_GPIO_WritePin(SEG5_GPIO_Port, SEG5_Pin, (digit & (1u<<5)) ? RESET : SET);
+	HAL_GPIO_WritePin(SEG6_GPIO_Port, SEG6_Pin, (digit & (1u<<6)) ? RESET : SET);
+}
+
+void enable7SEG(uint8_t num) {
+	switch (num)
+	{
+		case 0:
+			HAL_GPIO_WritePin(EN0_GPIO_Port, EN0_Pin, RESET);
+			HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, SET);
+			HAL_GPIO_WritePin(EN2_GPIO_Port, EN2_Pin, SET);
+			HAL_GPIO_WritePin(EN3_GPIO_Port, EN3_Pin, SET);
+			break;
+		case 1:
+			HAL_GPIO_WritePin(EN0_GPIO_Port, EN0_Pin, SET);
+			HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, RESET);
+			HAL_GPIO_WritePin(EN2_GPIO_Port, EN2_Pin, SET);
+			HAL_GPIO_WritePin(EN3_GPIO_Port, EN3_Pin, SET);
+			break;
+		default:
+			break;
+
+	}
+}
+
+void Ex_run() {
+	HAL_GPIO_TogglePin(SOURCE_LED_GPIO_Port, SOURCE_LED_Pin);
+	switch (led7seg_status)
+	{
+		case INIT:
+			HAL_GPIO_WritePin(SEG0_GPIO_Port, SEG0_Pin, SET);
+			HAL_GPIO_WritePin(SEG1_GPIO_Port, SEG1_Pin, SET);
+			HAL_GPIO_WritePin(SEG2_GPIO_Port, SEG2_Pin, SET);
+			HAL_GPIO_WritePin(SEG3_GPIO_Port, SEG3_Pin, SET);
+			HAL_GPIO_WritePin(SEG4_GPIO_Port, SEG4_Pin, SET);
+			HAL_GPIO_WritePin(SEG5_GPIO_Port, SEG5_Pin, SET);
+			HAL_GPIO_WritePin(SEG6_GPIO_Port, SEG6_Pin, SET);
+			led7seg_status = LED0;
+			break;
+		case LED0:
+			enable7SEG(0);
+			display7SEG(SEG7_MAT[1]);
+			led7seg_status = LED1;
+			break;
+		case LED1:
+			enable7SEG(1);
+			display7SEG(SEG7_MAT[2]);
+			led7seg_status = LED0;
+			break;
+	}
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -89,7 +168,7 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -251,7 +330,15 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+uint8_t counter = 100;
+void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef *htim)
+{
+	counter--;
+	if (counter <= 0) {
+		counter = 100;
+		Ex_run();
+	}
+}
 /* USER CODE END 4 */
 
 /**
